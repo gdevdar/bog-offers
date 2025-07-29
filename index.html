@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BoG Offers Chat</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: #f4f6fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      margin-top: 40px;
+      color: #222;
+      letter-spacing: 1px;
+    }
+    #chat {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #e0e0e0;
+      padding: 18px 18px 8px 18px;
+      height: 60vh;
+      min-height: 320px;
+      max-height: 70vh;
+      width: 100%;
+      max-width: 900px;
+      min-width: 320px;
+      overflow-y: auto;
+      margin-bottom: 18px;
+      margin-top: 10px;
+      transition: box-shadow 0.2s, height 0.2s, width 0.2s;
+      box-sizing: border-box;
+    }
+    .user {
+      color: #0074D9;
+      margin: 10px 0 6px 0;
+      text-align: right;
+    }
+    .bot {
+      color: #222;
+      margin: 10px 0 6px 0;
+      text-align: left;
+    }
+    .msg {
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: inline-block;
+      max-width: 85%;
+      background: #f0f2f7;
+      margin-bottom: 2px;
+    }
+    .user.msg {
+      background: #e6f0fa;
+      margin-left: 15%;
+    }
+    .bot.msg {
+      background: #f0f2f7;
+      margin-right: 15%;
+    }
+    #inputArea {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      min-width: 320px;
+      margin-bottom: 40px;
+      gap: 8px;
+      box-sizing: border-box;
+    }
+    #userInput {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #cfd8dc;
+      font-size: 1rem;
+      outline: none;
+      background: #fff;
+      transition: border 0.2s;
+    }
+    #userInput:focus {
+      border: 1.5px solid #0074D9;
+    }
+    #sendBtn {
+      padding: 0 24px;
+      border-radius: 8px;
+      border: none;
+      background: #0074D9;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 500;
+    }
+    #sendBtn:disabled {
+      background: #b0c4d9;
+      cursor: not-allowed;
+    }
+    a {
+      color: #0074D9;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+    @media (max-width: 950px) {
+      #chat, #inputArea {
+        max-width: 98vw;
+      }
+    }
+    @media (max-width: 600px) {
+      #chat, #inputArea {
+        min-width: 0;
+        width: 98vw;
+        padding-left: 2vw;
+        padding-right: 2vw;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>BoG Offers Chat</h1>
+  <div id="chat"></div>
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off" />
+    <button id="sendBtn">Send</button>
+  </div>
+  <script>
+    const chatDiv = document.getElementById('chat');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    let history = [];
+
+    // Convert [text](url) to clickable links and preserve line breaks
+    function formatBotMessage(text) {
+      // Convert [text](url) to <a href="url" target="_blank">text</a>
+      const linkified = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+      // Convert newlines to <br> for structure
+      return linkified.replace(/\n/g, '<br>');
+    }
+
+    function appendMessage(sender, text) {
+      const div = document.createElement('div');
+      div.className = sender + ' msg';
+      if (sender === 'bot') {
+        div.innerHTML = `<b>Bot:</b> ` + formatBotMessage(text);
+      } else {
+        div.innerHTML = `<b>You:</b> ` + text;
+      }
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+      appendMessage('user', message);
+      userInput.value = '';
+      sendBtn.disabled = true;
+
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history })
+      });
+      const data = await response.json();
+      appendMessage('bot', data.response);
+      history.push([message, data.response]);
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+
+    sendBtn.onclick = sendMessage;
+    userInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html> 
