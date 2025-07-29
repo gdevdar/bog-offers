@@ -29,6 +29,7 @@ source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
+Python 3.13.2 was used for the project. To avoid potential issues, python 3.13.2 is recommended.
 ```
 pip install -r requirements.txt
 ```
